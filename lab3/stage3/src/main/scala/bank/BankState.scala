@@ -1,6 +1,6 @@
 package bank
 
-import bank.AccountAction.Creation
+import bank.Transaction.Deposit
 import bank.errors.Error.TransactionError
 
 final case class BankState(accounts: Map[Int, Account], history: List[BankAction]) {
@@ -14,11 +14,28 @@ final case class BankState(accounts: Map[Int, Account], history: List[BankAction
         Right(BankState(
           accounts.updated(
             newAccountID,
-            Account(0, currency, List(Creation()))
+            Account(0, currency)
           ),
           BankAction.AccountCreation(newAccountID, currency) :: history
         ))
-//      case
+      case Transaction.Deposit(accountID, amount, currency) =>
+        getAccountOrError(accountID).flatMap{ account =>
+          account.deposit(amount, currency).map{ updatedAccount =>
+            BankState(
+              accounts.updated(accountID, updatedAccount),
+              BankAction.Deposition(accountID, amount, updatedAccount) :: history
+            )
+          }
+        }
+      case Transaction.Withdraw(accountID, amount, currency) =>
+        getAccountOrError(accountID).flatMap{ account =>
+          account.withdrawal(amount, currency).map{ updatedAccount =>
+            BankState(
+              accounts.updated(accountID, updatedAccount),
+              BankAction.Withdrawal(accountID, amount, updatedAccount) :: history
+            )
+          }
+        }
       case _ => Left(TransactionError("Unknown transaction"))
     }
 
@@ -27,6 +44,11 @@ final case class BankState(accounts: Map[Int, Account], history: List[BankAction
       s"Operations of account $id (${account.currency}):\n" +
       account.historyString
     }
+
+  private def getAccountOrError(accountID: Int): Either[TransactionError, Account] =
+    accounts.get(accountID).map{ Right(_) }.getOrElse(Left(TransactionError(
+      s"Account $accountID does not exist"
+    )))
 
 //  def map(f: => ): BankState
 

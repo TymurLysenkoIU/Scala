@@ -1,44 +1,12 @@
 package bank.app
-import bank.{BankState, Currency}
-import bank.Transaction.CreateAccount
+import bank.{BankState, Currency, Try}
+import bank.Transaction.{CreateAccount, Deposit, Withdraw}
 import bank.errors.Error.{ParseError, TransactionError}
 
 import scala.annotation.tailrec
 import scala.io.StdIn
 
 object Main extends App {
-  def parseCommand(input: String): Either[ParseError, Command] = {
-    input match {
-      case "exit" => Right(Command.Exit)
-      case "help" => Right(Command.Help)
-      case s"history of account $id" =>
-        id.toIntOption.map { i => Right(Command.PrintHistory(i)) }.getOrElse(
-            Left(
-              ParseError(
-                """History of account command has the following format:
-                  |history of account $id
-                  |where $id is a number of the account
-                  |""".stripMargin
-              )
-            )
-          )
-      case s"open account in $currencyName" =>
-        Currency
-          .fromString(currencyName)
-          .map { c => Right(Command.TransactionCommand(CreateAccount(c))) }
-          .getOrElse(
-            Left(
-              ParseError(
-                """Only the following currencies are supported:
-                  |RUB
-                  |USD.""".stripMargin
-              )
-            )
-          )
-      case _ => Left(ParseError(s"Unknown input: $input"))
-    }
-  }
-
   @tailrec def mainLoop(state: BankState): Unit = {
     print("> ")
     val input = StdIn.readLine()
