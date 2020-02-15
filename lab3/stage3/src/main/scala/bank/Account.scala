@@ -46,7 +46,7 @@ case class Account(
           Right(
             (fromAccountId, toAccountId) => {
               (Account(balance - amount, currency, AccountAction.TransferTo(amount, currency, toAccountId) :: history),
-               Account(balance + amount, currency, AccountAction.TransferFrom(amount, currency, fromAccountId) :: history))
+               Account(toAccount.balance + amount, toAccount.currency, AccountAction.TransferFrom(amount, currency, fromAccountId) :: toAccount.history))
             }
           )
         else
