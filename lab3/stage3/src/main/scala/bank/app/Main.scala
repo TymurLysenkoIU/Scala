@@ -1,6 +1,5 @@
 package bank.app
-import bank.{BankState, Currency, Try}
-import bank.Transaction.{CreateAccount, Deposit, Withdraw}
+import bank.BankState
 import bank.errors.Error.{ParseError, TransactionError}
 
 import scala.annotation.tailrec

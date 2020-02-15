@@ -38,4 +38,27 @@ case class Account(
       Left(TransactionError(
         s"Cannot withdrawal $withdrawalCurrency from $currency account"
       ))
+
+  def transfer(amount: BigDecimal, transferCurrency: Currency, toAccount: Account): Either[TransactionError, (Int, Int) => (Account, Account)] =
+    if (transferCurrency == currency)
+      if (transferCurrency == toAccount.currency)
+        if (balance >= amount)
+          Right(
+            (fromAccountId, toAccountId) => {
+              (Account(balance - amount, currency, AccountAction.TransferTo(amount, currency, toAccountId) :: history),
+               Account(balance + amount, currency, AccountAction.TransferFrom(amount, currency, fromAccountId) :: history))
+            }
+          )
+        else
+          Left(TransactionError(
+            s"Cannot transfer $amount from the account. The current balance is: $balance"
+          ))
+      else
+        Left(TransactionError(
+          s"Cannot transfer $transferCurrency to $currency account"
+        ))
+    else
+      Left(TransactionError(
+        s"Cannot transfer $transferCurrency from $currency account"
+      ))
 }

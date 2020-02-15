@@ -1,6 +1,6 @@
 package bank
 
-import bank.Transaction.{CreateAccount, Deposit, Withdraw}
+import bank.Transaction.{CreateAccount, Deposit, Transfer, Withdraw}
 import bank.errors.Error.ParseError
 
 package object app {
@@ -39,15 +39,15 @@ package object app {
         ) yield {
           Right(Command.TransactionCommand(Deposit(id, amt, cur)))
         })
-          .getOrElse(Left(ParseError(
-            """Deposit command format:
-              |deposit $amount $currency to account $accountID
-              |where:
-              |  $amount is a decimal number with possibly number after decimal point,
-              |  $currency is: RUB or USD
-              |  $accountID is an integer number
-              |""".stripMargin
-          )))
+        .getOrElse(Left(ParseError(
+          """Deposit command format:
+            |deposit $amount $currency to account $accountID
+            |where:
+            |  $amount is a decimal number with possibly number after decimal point,
+            |  $currency is: RUB or USD
+            |  $accountID is an integer number
+            |""".stripMargin
+        )))
       case s"withdraw $amount $currency from account $accountID" =>
         (for (
           amt <- Try(BigDecimal(amount));
@@ -56,25 +56,33 @@ package object app {
         ) yield {
           Right(Command.TransactionCommand(Withdraw(id, amt, cur)))
         })
-          .getOrElse(Left(ParseError(
-            """Withdrawal command format:
-              |Withdraw $amount $currency from account $accountID
-              |where:
-              |  $amount is a decimal number with possibly number after decimal point,
-              |  $currency is: RUB or USD
-              |  $accountID is an integer number
-              |""".stripMargin
-          )))
+        .getOrElse(Left(ParseError(
+          """Withdrawal command format:
+            |Withdraw $amount $currency from account $accountID
+            |where:
+            |  $amount is a decimal number with possibly number after decimal point,
+            |  $currency is: RUB or USD
+            |  $accountID is an integer number
+            |""".stripMargin
+        )))
       case s"transfer $amount $currency from account $fromAccountID to account $toAccountID" =>
-        for (
+        (for (
           amt <- Try(BigDecimal(amount));
           currency <- Currency.fromString(currency);
           fromID <- fromAccountID.toIntOption;
-          toAccountID <- toAccountID.toIntOption
+          toID <- toAccountID.toIntOption
         ) yield {
-          ??? // TODO
-        }
-        ???
+          Right(Command.TransactionCommand(Transfer(fromID, toID, amt, currency)))
+        })
+        .getOrElse(Left(ParseError(
+          """Transfer command format:
+            |transfer $amount $currency from account $accountID to account $accountID
+            |where:
+            |  $amount is a decimal number with possibly number after decimal point,
+            |  $currency is: RUB or USD
+            |  $accountID is an integer number
+            |""".stripMargin
+        )))
       case _ => Left(ParseError(s"Unknown input: $input"))
     }
   }

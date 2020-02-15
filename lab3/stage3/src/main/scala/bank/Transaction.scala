@@ -6,4 +6,5 @@ object Transaction {
   final case class CreateAccount(currency: Currency) extends Transaction
   final case class Deposit(accountID: Int, amount: BigDecimal, currency: Currency) extends Transaction
   final case class Withdraw(accountID: Int, amount: BigDecimal, currency: Currency) extends Transaction
+  final case class Transfer(fromAccountID: Int, toAccountID: Int, amount: BigDecimal, currency: Currency) extends Transaction
 }

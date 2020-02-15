@@ -1,6 +1,5 @@
 package bank
 
-import bank.Transaction.Deposit
 import bank.errors.Error.TransactionError
 
 final case class BankState(accounts: Map[Int, Account], history: List[BankAction]) {
@@ -36,6 +35,26 @@ final case class BankState(accounts: Map[Int, Account], history: List[BankAction
             )
           }
         }
+      case Transaction.Transfer(fromAccountID, toAccountID, amount, currency) =>
+        for (
+          fromAccount <- getAccountOrError(fromAccountID);
+          toAccount <- getAccountOrError(toAccountID);
+          updatedAccounts <- fromAccount.transfer(amount, currency, toAccount)
+        ) yield {
+          val (updatedFromAccount, updatedToAccount) =
+            updatedAccounts(fromAccountID, toAccountID)
+
+          BankState(
+            accounts
+              .updated(fromAccountID, updatedFromAccount)
+              .updated(toAccountID, updatedToAccount),
+            BankAction.MoneyTransfer(
+              fromAccountID, toAccountID,
+              amount,
+              updatedFromAccount, updatedToAccount
+            ) :: history
+          )
+        }
       case _ => Left(TransactionError("Unknown transaction"))
     }
 
@@ -49,10 +68,6 @@ final case class BankState(accounts: Map[Int, Account], history: List[BankAction
     accounts.get(accountID).map{ Right(_) }.getOrElse(Left(TransactionError(
       s"Account $accountID does not exist"
     )))
-
-//  def map(f: => ): BankState
-
-//  def flatMap(f: => BankState): BankState
 }
 
 object BankState {
